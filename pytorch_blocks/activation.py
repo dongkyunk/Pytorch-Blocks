@@ -14,5 +14,13 @@ activation_dict = dict(
 
 
 def get_activation(activation, **kwargs):
+    """Get nn.Module from activation name.
+
+    Args:
+        activation (str): name of activation function.
+        **kwargs: keyword arguments for activation function.
+    Returns:
+        nn.Module
+    """    
     return getattr(nn, activation_dict[activation])(**kwargs)
 

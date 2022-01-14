@@ -11,4 +11,12 @@ normalization_dict = dict(
 
 
 def get_normalization(normalization, **kwargs):
+    """Get nn.Module from normalization name.
+
+    Args:
+        normalization (str): name of normalization function.
+        **kwargs: keyword arguments for normalization function.
+    Returns:
+        nn.Module
+    """    
     return getattr(nn, normalization_dict[normalization])(**kwargs)
