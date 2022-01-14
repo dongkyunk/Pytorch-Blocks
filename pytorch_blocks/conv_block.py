@@ -1,6 +1,6 @@
 import torch.nn as nn
-from activation import get_activation
-from normalization import get_normalization
+from pytorch_blocks.activation import get_activation
+from pytorch_blocks.normalization import get_normalization
 
 
 class ConvBlock(nn.Sequential):
