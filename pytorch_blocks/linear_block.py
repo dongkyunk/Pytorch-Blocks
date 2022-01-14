@@ -9,13 +9,13 @@ class LinearBlock(nn.Sequential):
     Args:
         act (str): activation function name.
         norm (str): normalization function name.
-        **conv_kargs: keyword arguments for linear layer (same as nn.Linear).
+        **conv_kargs: keyword arguments for nn.Linear.
     """    
     def __init__(self, act='none', norm='none', **linear_kwargs):
         super().__init__(
             nn.Linear(**linear_kwargs),
-            get_activation(act),
             get_normalization(norm, num_features=linear_kwargs['out_features']),
+            get_activation(act),
         )
 
 
@@ -27,7 +27,7 @@ class LinearBlocks(nn.Sequential):
         dims (list): list of input and output channels.
         act (str): activation function name.
         norm (str): normalization function name.
-        **conv_kargs: keyword arguments for linear layer (same as nn.Linear).
+        **conv_kargs: keyword arguments for nn.Linear.
     """    
     def __init__(self, num_blocks, dims, act='none', norm='none', **linear_kwargs):
         super().__init__()
