@@ -12,6 +12,7 @@ class LinearBlock(nn.Sequential):
         **conv_kargs: keyword arguments for nn.Linear.
     """    
     def __init__(self, act='none', norm='none', **linear_kwargs):
+        assert norm in ['bn1d', 'in1d', 'ln', 'none'], "Unsupported normalization function."
         super().__init__(
             nn.Linear(**linear_kwargs),
             get_normalization(norm, num_features=linear_kwargs['out_features']),
@@ -30,8 +31,8 @@ class LinearBlocks(nn.Sequential):
         **conv_kargs: keyword arguments for nn.Linear.
     """    
     def __init__(self, num_blocks, dims, act='none', norm='none', **linear_kwargs):
+        assert len(dims) == num_blocks + 1, "Dims length must be num_blocks + 1."
         super().__init__()
-        assert len(dims) == num_blocks + 1
         for i in range(num_blocks):
             self.add_module(
                 f'linear_block_{i}',

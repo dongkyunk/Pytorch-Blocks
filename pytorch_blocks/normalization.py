@@ -19,4 +19,5 @@ def get_normalization(normalization, **kwargs):
     Returns:
         nn.Module
     """    
+    assert normalization in normalization_dict, f'{normalization} is not supported.'
     return getattr(nn, normalization_dict[normalization])(**kwargs)

@@ -1,26 +1,32 @@
+import re
 import torch.nn as nn
 from torchvision.ops import stochastic_depth
 from pytorch_blocks.conv_block import ConvBlock
 from pytorch_blocks.activation import get_activation
+from pytorch_blocks.attention import SEBlock
 
 
 class ResBlock(nn.Module):
     """A block with residual connection.
 
     Args:
+        p (float): stochastic depth probability. Defaults to 0.
         **stochastic_depth_kargs: keyword arguments for torchvision.ops.stochastic_depth.
     """
 
-    def __init__(self, **stochastic_depth_kargs):
+    def __init__(self, use_stochastic_depth=False, **stochastic_depth_kargs):
         super().__init__()
         self.layers = None
         self.activation = None
-        self.stochastic_depth_args = stochastic_depth_kargs
+        self.use_stochastic_depth = use_stochastic_depth
+        if self.use_stochastic_depth:
+            self.stochastic_depth_kargs = stochastic_depth_kargs
 
     def forward(self, x):
         skip = x
         x = self.layers(x)
-        x = stochastic_depth(x, **self.stochastic_depth_args)
+        if self.use_stochastic_depth:
+            x = stochastic_depth(x, **self.stochastic_depth_kargs)
         x = x + skip
         x = self.activation(x)
         return x
@@ -38,7 +44,7 @@ class StandardResBlock(ResBlock):
         **stochastic_depth_kargs: keyword arguments for torchvision.ops.stochastic_depth.
     """
 
-    def __init__(self, in_channels, hidden_channels, act='relu', norm='bn', **stochastic_depth_kargs):
+    def __init__(self, in_channels, hidden_channels, act='relu', norm='bn2d', **stochastic_depth_kargs):
         super().__init__(**stochastic_depth_kargs)
         self.layers = nn.Sequential(
             ConvBlock(in_channels=in_channels, out_channels=hidden_channels,
@@ -60,9 +66,9 @@ class BottleneckResBlock(ResBlock):
         **stochastic_depth_kargs: keyword arguments for torchvision.ops.stochastic_depth.
     """
 
-    def __init__(self, in_channels, hidden_channels, act='relu', norm='bn', cardinality=1, **stochastic_depth_kargs):
-        super().__init__(**stochastic_depth_kargs)
+    def __init__(self, in_channels, hidden_channels, act='relu', norm='bn2d', cardinality=1, **stochastic_depth_kargs):
         assert hidden_channels % cardinality == 0
+        super().__init__(**stochastic_depth_kargs)
         self.layers = nn.Sequential(
             ConvBlock(in_channels=in_channels, out_channels=hidden_channels,
                       kernel_size=1, padding='same', act=act, norm=norm),
@@ -86,9 +92,8 @@ class InvertedResBlock(BottleneckResBlock):
         **stochastic_depth_kargs: keyword arguments for torchvision.ops.stochastic_depth.
     """
 
-    def __init__(self, in_channels, hidden_channels, act='relu', norm='bn', **stochastic_depth_kargs):
-        assert(hidden_channels >= in_channels,
-               "Inverted Residual Block: hidden_channels are usually greater or equal to in_channels")
+    def __init__(self, in_channels, hidden_channels, act='relu', norm='bn2d', **stochastic_depth_kargs):
+        assert hidden_channels >= in_channels, "Inverted Residual Block: hidden_channels are usually greater or equal to in_channels"
         super().__init__(in_channels, hidden_channels, act, norm,
                          cardinality=hidden_channels, **stochastic_depth_kargs)
 
@@ -106,11 +111,9 @@ class ResNeXtBlock(BottleneckResBlock):
         **stochastic_depth_kargs: keyword arguments for torchvision.ops.stochastic_depth.
     """
 
-    def __init__(self, in_channels, hidden_channels, act='relu', norm='bn', cardinality=32, **stochastic_depth_kargs):
-        assert(cardinality > 1,
-               "ResNext Block: cardinality should be greater than 1")
-        assert (hidden_channels % cardinality == 0,
-                "ResNext Block: hidden_channels should be divisible by cardinality")
+    def __init__(self, in_channels, hidden_channels, act='relu', norm='bn2d', cardinality=32, **stochastic_depth_kargs):
+        assert cardinality > 1, "ResNext Block: cardinality should be greater than 1"
+        assert hidden_channels % cardinality == 0, "ResNext Block: hidden_channels should be divisible by cardinality"
         super().__init__(in_channels, hidden_channels, act, norm,
                          cardinality=cardinality, **stochastic_depth_kargs)
 
@@ -118,7 +121,7 @@ class ResNeXtBlock(BottleneckResBlock):
 class ConvNeXtBlock(ResBlock):
     """ConvNeXt block in "A ConvNet for the 2020s"
     https://arxiv.org/abs/2201.03545
-    
+
     DwConv -> LayerNorm (channels_first) -> 1x1 Conv -> GELU -> 1x1 Conv; all in (N, C, H, W)
 
     Args:
@@ -140,3 +143,18 @@ class ConvNeXtBlock(ResBlock):
                       kernel_size=1, padding='same', act='none', norm='none'),
         )
         self.activation = get_activation('none')
+
+
+class SEResBlock(StandardResBlock):
+    """Standard Residual block with Squeeze-and-Excitation to the residual"""    
+    def __init__(self, in_channels, hidden_channels, act='relu', norm='bn2d', **stochastic_depth_kargs):
+        super().__init__(in_channels, hidden_channels, act, norm, **stochastic_depth_kargs)
+        self.layers.add_module('se', SEBlock(in_channels=hidden_channels, act=act))
+
+
+class SEBottleneckResBlock(BottleneckResBlock):
+    """Bottleneck Residual block with Squeeze-and-Excitation to the residual"""
+    def __init__(self, in_channels, hidden_channels, act='relu', norm='bn2d', **stochastic_depth_kargs):
+        super().__init__(in_channels, hidden_channels, act, norm, **stochastic_depth_kargs)
+        self.layers.add_module('se', SEBlock(in_channels=hidden_channels, act=act))
+

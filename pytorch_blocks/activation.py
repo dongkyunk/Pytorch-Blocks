@@ -22,5 +22,6 @@ def get_activation(activation, **kwargs):
     Returns:
         nn.Module
     """    
+    assert activation in activation_dict, f'{activation} is not supported.'
     return getattr(nn, activation_dict[activation])(**kwargs)
 

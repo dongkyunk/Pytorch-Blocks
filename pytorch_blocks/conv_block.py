@@ -3,7 +3,6 @@ from einops import rearrange
 from pytorch_blocks.activation import get_activation
 from pytorch_blocks.normalization import get_normalization
 
-
 class ConvBlock(nn.Module):
     """Convolutional block with activation and normalization.
 
@@ -13,8 +12,8 @@ class ConvBlock(nn.Module):
         **conv_kargs: keyword arguments for nn.Conv2d.
     """    
     def __init__(self, act='none', norm='none', **conv_kargs):        
+        assert norm in ['bn2d', 'ln', 'in2d', 'none'], "Unsupported image normalization function."
         super().__init__()
-        assert (norm in ['bn2d', 'ln', 'in2d', 'none'], "Unsupported image normalization function.")
         self.conv = nn.Conv2d(**conv_kargs)
         self.act = get_activation(act)
         if norm in ['bn2d', 'in2d']:
@@ -49,8 +48,8 @@ class ConvBlocks(nn.Sequential):
         **conv_kargs: keyword arguments for nn.Conv2d.
     """    
     def __init__(self, num_blocks, dims, act='none', norm='none', **conv_kargs):
+        assert len(dims) == num_blocks + 1, "Dims length must be num_blocks + 1."
         super().__init__()
-        assert len(dims) == num_blocks + 1
         for i in range(num_blocks):
             self.add_module(
                 f'conv_block_{i}',
