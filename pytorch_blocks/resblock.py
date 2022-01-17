@@ -6,7 +6,7 @@ from pytorch_blocks.attention import SEBlock
 
 
 class ResBlock(nn.Module):
-    """A block with residual connection.
+    """A arbitrary block with residual connection.
 
     Args:
         p (float): stochastic depth probability. Defaults to 0.

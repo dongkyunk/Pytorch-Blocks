@@ -14,16 +14,18 @@ class ConvBlock(nn.Module):
     def __init__(self, act='none', norm='none', **conv_kargs):        
         assert norm in ['bn2d', 'ln', 'in2d', 'none'], "Unsupported image normalization function."
         super().__init__()
-        self.conv = nn.Conv2d(**conv_kargs)
-        self.act = get_activation(act)
         if norm in ['bn2d', 'in2d']:
             self.norm = get_normalization(norm, num_features=conv_kargs['out_channels'])
+            conv_kargs['bias'] = False
         elif norm == 'ln':
             # Layer normalization is done on the channel dimension only
             self.norm = get_normalization(norm, normalized_shape=conv_kargs['out_channels'])
             self.reshape = True
         elif norm == 'none':
             self.norm = get_normalization(norm)
+        self.conv = nn.Conv2d(**conv_kargs)
+        self.act = get_activation(act)
+
 
     def forward(self, x):
         x = self.conv(x)

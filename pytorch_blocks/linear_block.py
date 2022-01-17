@@ -13,6 +13,8 @@ class LinearBlock(nn.Sequential):
     """    
     def __init__(self, act='none', norm='none', **linear_kwargs):
         assert norm in ['bn1d', 'in1d', 'ln', 'none'], "Unsupported normalization function."
+        if norm in ['bn1d', 'in1d']:
+            linear_kwargs['bias'] = False
         super().__init__(
             nn.Linear(**linear_kwargs),
             get_normalization(norm, num_features=linear_kwargs['out_features']),
