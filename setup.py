@@ -11,8 +11,8 @@ setup(
     packages=['pytorch_blocks'],
     zip_safe=False,
     install_requires=[
-        'torch'
-        'torchvision'
-        'einops'
+        'torch',
+        'torchvision',
+        'einops',
     ]
 )
