@@ -1,4 +1,3 @@
-import re
 import torch.nn as nn
 from torchvision.ops import stochastic_depth
 from pytorch_blocks.conv_block import ConvBlock
