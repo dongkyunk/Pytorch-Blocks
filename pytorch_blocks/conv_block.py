@@ -11,8 +11,12 @@ class ConvBlock(nn.Sequential):
         norm (str): normalization function name.
         **conv_kargs: keyword arguments for nn.Conv2d.
     """    
-    def __init__(self, act='none', norm='none', **conv_kargs):        
+    def __init__(self, in_dim, out_dim, act='none', norm='none', **conv_kargs):        
         assert norm in ['bn2d', 'ln', 'in2d', 'none'], "Unsupported image normalization function."
+
+        conv_kargs['in_channels'] = in_dim
+        conv_kargs['out_channels'] = out_dim
+
         if norm in ['bn2d', 'in2d']:
             norm = get_normalization(norm, num_features=conv_kargs['out_channels'])
             conv_kargs['bias'] = False

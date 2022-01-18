@@ -11,10 +11,15 @@ class LinearBlock(nn.Sequential):
         norm (str): normalization function name.
         **conv_kargs: keyword arguments for nn.Linear.
     """    
-    def __init__(self, act='none', norm='none', **linear_kwargs):
+    def __init__(self, in_dim, out_dim, act='none', norm='none', **linear_kwargs):
         assert norm in ['bn1d', 'in1d', 'ln', 'none'], "Unsupported normalization function."
+        
         if norm in ['bn1d', 'in1d']:
             linear_kwargs['bias'] = False
+
+        linear_kwargs['in_features'] = in_dim
+        linear_kwargs['out_features'] = out_dim
+        
         super().__init__(
             nn.Linear(**linear_kwargs),
             get_normalization(norm, num_features=linear_kwargs['out_features']),
