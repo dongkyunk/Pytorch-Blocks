@@ -14,20 +14,20 @@ class ConvBlock(nn.Sequential):
     def __init__(self, act='none', norm='none', **conv_kargs):        
         assert norm in ['bn2d', 'ln', 'in2d', 'none'], "Unsupported image normalization function."
         if norm in ['bn2d', 'in2d']:
-            self.norm = get_normalization(norm, num_features=conv_kargs['out_channels'])
+            norm = get_normalization(norm, num_features=conv_kargs['out_channels'])
             conv_kargs['bias'] = False
         elif norm == 'ln':
-            self.norm = nn.Sequential(
+            norm = nn.Sequential(
                 Rearrange('b c h w -> b h w c'),
                 get_normalization(norm, normalized_shape=conv_kargs['out_channels']), # channel dimension only
                 Rearrange('b h w c -> b c h w'),
             )
         elif norm == 'none':
-            self.norm = get_normalization(norm)
+            norm = get_normalization(norm)
 
         super().__init__(
             nn.Conv2d(**conv_kargs),
-            self.norm,
+            norm,
             get_activation(act),
         )
 
